@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('css').getContent(); ?>
+    <script>
+      // https://developers.google.com/apps-script/guides/html/communication#forms
+      function preventFormSubmit() {
+        var forms = document.querySelectorAll('form');
+        for (var i = 0; i < forms.length; i++) {
+          forms[i].addEventListener('submit', function(event) {
+            event.preventDefault();
+          });
+        }
+      }
+      window.addEventListener('load', preventFormSubmit);
+
+      /**
+       *  タイムレコーダーの登録ボタンクリック時に発火
+       */ 
+      function handleWorkRecordFormSubmit(formObject) {
+        console.log('formObjectの中身', formObject, 'ここまで');
+        updateWRMessage('更新中....')
+        // .gsファイルのpostWorkRecordファンクションを呼び出し、成功したらmessage更新
+        google.script.run.withSuccessHandler(updateWRMessage).saveWorkRecord(formObject);
+        
+      }
+
+      function handleRoleRecordFormSubmit(formObject) {
+        console.log('formObjectの中身', formObject, 'ここまで');
+        updateRLMessage('更新中....')
+        // .gsファイルのpostWorkRecordファンクションを呼び出し、成功したらmessage更新
+        google.script.run.withSuccessHandler(updateRLMessage).saveRoleRecord(formObject);
+        
+      }
+      /**
+       *  タイムレコーダーの登録ボタン下のメッセージを更新
+       */
+      function updateWRMessage(message) {
+        var div = document.getElementById('wr_submit_message');
+        div.innerHTML = message;
+      }
+      function updateRLMessage(message) {
+        var div = document.getElementById('rl_submit_message');
+        div.innerHTML = message;
+      }
+      /**
+       *  メモの登録ボタンクリック時に発火
+       */ 
+      function handleMemoFormSubmit(formObject) {
+        updateMemoMessage('更新中....')
+        // .gsファイルのsaveWorkRecordファンクションを呼び出し、成功したらmessage更新
+        google.script.run.withSuccessHandler(updateMemoMessage).saveMemo(formObject);
+      }
+
+      /**
+       *  メモの登録ボタン下のメッセージを更新
+       */
+      function updateMemoMessage(message) {
+        var div = document.getElementById('memo_submit_message');
+        div.innerHTML = message;
+      }
+
+    </script>
+  </head>
+  <body>
+    <div>
+      <span>名前:</span>
+      <span>
+       <?
+          var emp = getEmployeeName()
+      ?>
+        <?= emp ?>
+      </span>
+    </div>
+    <div>
+      <h3>今月のタイムレコーダー履歴</h3>
+      <div></div>
+      <table border="2">
+        <thead>
+          <th>種別</th>
+          <th>日時</th>
+        </thead>
+        <tbody>
+          <?
+          // 勤怠情報を取得 ※時間がずれる場合はプロジェクトの設定からタイムゾーンを設定してください
+          var record = getTimeClocks();
+          // 勤怠情報の配列の繰り返し処理
+          for (var i = 0; i <= record.length - 1; i++) {
+          ?>
+          <tr>
+            <th>
+              <?= record[i]['type'] ?>
+            </th>
+            <th>
+              <?= record[i]['date'] ?>
+            </th>
+          </tr>
+          <? } ?>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <form id="memoForm" onsubmit="handleMemoFormSubmit(this)">
+        <span>勤怠チェックメモ:</span>
+        <input name="memo" type="text" size="50" value="<?= getEmpMemo() ?>"/>
+        <div class="btn-frame">
+            <input type="submit" value="登録" class="btn"/>
+            <div id="memo_submit_message"></div>
+          </div>
+      </form>
+    </div>
+    <div>
+      <h3>タイムレコーダー</h3>
+      <form id="workRecordForm" onsubmit="handleWorkRecordFormSubmit(this)">
+        <div>
+          <label>登録種別</label>
+          <select name="target_type" id="pet-select">
+              <option value="clock_in">出勤</option>
+              <option value="break_begin">休憩開始</option>
+              <option value="break_end">休憩終了</option>
+              <option value="clock_out">退勤</option>
+          </select>
+          <div class="btn-frame">
+            <input type="submit" value="登録" class="btn"/>
+            <div id="wr_submit_message"></div>
+          </div>
+        </div>
+      </form>
+      
+
+
+      
+      <h3>ロール</h3>
+
+      <form id="roleRecordForm" onsubmit="handleRoleRecordFormSubmit(this)">
+        <div>
+          <label>登録種別</label>
+          <select name="role_type" id="role-select">
+              <option value="hall">ホール</option>
+              <option value="kitchen">キッチン</option>
+              <option value="non"> </option>
+          </select>
+          <div class="btn-frame">
+            <input type="submit" value="登録" class="btn"/>
+            <div id="rl_submit_message"></div>
+          </div>
+        </div>
+      </form>
+      <div>
+        <h3>臨時シフト募集</h3>
+        <table border="1">
+        <thead>
+          <tr>
+            <th>
+            開始日時
+            </th>
+            <th>
+            終了日時
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+                    <?
+          var arr = getShft()
+          console.log("shiftのarrはこれ", arr);
+
+          for (var i = 0; i < arr.length; i++) {
+            var startTime = arr[i][0][0];
+            var endTime = arr[i][0][1];
+          ?>
+          <tr>
+            <th>
+              <?= startTime ?>
+            </th>
+            <th>
+              <?= endTime ?>
+            </th>
+          </tr>
+          <?
+          } // forループの終了
+          ?>
+        </tbody>
+        </table>
+          <div class="btn-frame">
+            <input type="submit" value="登録" class="btn"/>
+            <div id="shift_submit_message"></div>
+          </div>
+
+
+      </div>
+
+
+
+
+     
+
+
+    <div class="btn-frame">
+      <a href="<?= getAppUrl() ?>">ホーム画面に戻る</a>
+    </div>
+  </body>
+</html>
