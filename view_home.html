@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('css').getContent(); ?>
+  </head>
+  <body>
+    <div>
+      <span>事業所名称:</span>
+      <span>開発用テスト事業所</span>
+    </div>
+    <div>
+      <h3 >従業員一覧</h3>
+      <table border="1">
+        <thead>
+          <tr>
+            <th>従業員番号</th>
+            <th>名前</th>
+            <th>ロール</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?
+          var arr = restRecommend();
+          var record = getEmployees();
+          var id_role = getRole();
+          
+          var alertEmployees = [];
+
+          // forループで各従業員の行を生成する
+          for (var i = 0; i < record.length; i++) {
+            var id = record[i]["id"];
+            var name = record[i]["name"];
+            var attend = record[i]["attend"];
+            
+            var health = arr[i]["liveTime"];
+            var role = id_role[i];
+            var nameClass = ""; 
+            
+            if (attend == 1) {
+              if (health >= 6) {
+                nameClass = "rest4";
+                alertEmployees.push(name);
+              } else if (health >= 4) {
+                nameClass = "rest3";
+                alertEmployees.push(name);
+              }
+            }
+          ?>
+          <tr>
+            <th>
+              <a href="<?= getAppUrl() ?>?empId=<?= id ?>"><?= id ?></a>
+            </th>
+            <th class="<?= nameClass ?>">
+              <? if (attend == 0) { ?>
+                <span style="color: #808080;"><?= name ?></span>
+              <? } else { ?>
+                <span><?= name ?></span>
+              <? } ?>
+            </th>
+            <th>
+                <span><?= role ?></span>
+              
+            </th>
+          </tr>
+          <?
+          } // forループの終了
+          ?>
+        </tbody>
+      </table>
+    </div>
+
+    <?
+    // 配列に1人でも対象者がいる場合のみ
+    if (alertEmployees.length > 0) {
+    
+        //なんか動かん⇒とりあえず後で
+
+        try {
+          var message = "以下の従業員の連続勤務時間が4時間を超えています。\n休憩を促してください。\n\n";
+          alert(message + alertEmployees.join(','));
+        } catch (e) {
+          console.error("アラートの表示中にエラーが発生しました:", e);
+        }    
+    } 
+    ?>
+  </body>
+</html>
